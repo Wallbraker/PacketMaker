@@ -15,7 +15,8 @@ void output(PacketGroup pg)
 
 	o.writeHeader(pg);
 
-	o.writeStruct(pg, pg.allPackets, "");
+	foreach(p; pg.allPackets)
+		o.writeStruct(pg, p, "");
 
 	foreach(p; pg.allPackets)
 		o.writeReadFunction(pg, p, "");
@@ -25,7 +26,7 @@ void output(PacketGroup pg)
 }
 
 
-void writeStruct(Stream o, PacketGroup pg, Packet[] packets, string indent)
+void writeStruct(Stream o, PacketGroup pg, Packet p, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
 
@@ -51,19 +52,17 @@ void writeStruct(Stream o, PacketGroup pg, Packet[] packets, string indent)
 		}
 	}
 
-	foreach(p; packets) {
-		o.writefln("%sstruct %s", indent, p.structName);
-		o.writefln("%s{", indent);
+	o.writefln("%sstruct %s", indent, p.structName);
+	o.writefln("%s{", indent);
 
-		o.writefln("%sconst ubyte %s = 0x%02s;", extraIndent, pg.idStr, to!string(p.id, 16));
-		o.writefln();
+	o.writefln("%sconst ubyte %s = 0x%02s;", extraIndent, pg.idStr, to!string(p.id, 16));
+	o.writefln();
 
-		foreach(m; p.members)
-			printMember(m);
+	foreach(m; p.members)
+		printMember(m);
 
-		o.writefln("%s}", indent);
-		o.writefln();
-	}
+	o.writefln("%s}", indent);
+	o.writefln();
 }
 
 void writeDispatchCase(Stream o, PacketGroup pg, Packet p)
