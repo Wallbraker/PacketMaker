@@ -39,6 +39,7 @@ class Member
 	enum Kind
 	{
 		Value,
+		ValueArray,
 		ValueAnon,
 		StructArray,
 		CondMembers,
@@ -46,12 +47,13 @@ class Member
 
 	Kind kind;
 
-	string type; // if kind == [Value, ValueAnon, ArrayStruct]
-	string name; // if kind == [Value, ArrayStruct]
+	string type; // must if kind == [Value, ValueArray, ValueAnon, ArrayStruct]
+	string name; // must if kind == [Value, ValueArray, ArrayStruct]
 
-	string times; // if kind == ArrayStruct
+	string lengthType; // optinal if kind == ValueArray
+	string times; // optinal if kind == ValueArray, must if kind == ArrayStruct
 
-	Member[] members; // if kind == [CondMembers, ArrayStruct]
+	Member[] members; // must if kind == [CondMembers, ArrayStruct]
 
 	string condCmp;
 	string condField;

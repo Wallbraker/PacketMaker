@@ -2,7 +2,7 @@
 // See copyright notice in src/license.d.
 module parser;
 
-import std.algorithm : find, sort, filter;
+import std.algorithm : find, sort, filter, split;
 import std.conv : to;
 import std.json : parseJSON, JSONValue, JSON_TYPE;
 import std.ascii : isAlphaNum;
@@ -134,6 +134,17 @@ private:
 			m.type = v.array[0].str;
 			m.name = v.array[1].str;
 			break;
+		case ValueArray:
+			auto t = split(v.array[0].str, ":");
+			if (t.length > 1) {
+				m.type = t[1];
+				m.lengthType = t[0];
+			} else {
+				m.type = t[0];
+				m.times = v.array[2].object["times"].str;
+			}
+			m.name = v.array[1].str;
+			break;
 		case ValueAnon:
 			m.type = v.array[0].str;
 			break;
@@ -208,9 +219,19 @@ private:
 			if (arr[1].type != JSON_TYPE.STRING)
 				throw new Exception("Second element in 2 element type must be string");
 
-			auto type = arr[0].str;
+			auto types = split(arr[0].str, ":");
 			auto name = arr[1].str;
-			if (name.length > 0)
+
+			if (types.length > 2)
+				throw new Exception("More the 2 array types");
+
+			if (types.length > 1 &&
+			    name.length == 0)
+				throw new Exception("Array values can't be anon");
+
+			if (types.length > 1)
+				return Member.Kind.ValueArray;
+			else if (name.length > 0)
 				return Member.Kind.Value;
 			else
 				return Member.Kind.ValueAnon;
@@ -231,16 +252,22 @@ private:
 				if (hasCondition(object))
 					return Member.Kind.CondMembers;
 
-				if (hasTimes(object))
-					throw new Exception("Values can't have times tags");
+				auto times = hasTimes(object);
 
-				if (hasUsed(object, used) && !used)
+				if (hasUsed(object, used) && !used) {
+					if (times)
+						throw new Exception("Anon values can't have times tags");
 					return Member.Kind.ValueAnon;
+				}
 
-				if (name.length > 0)
+				if (name.length == 0)
+					throw new Exception("Anon values can't be unused");
+
+				if (times)
+					return Member.Kind.ValueArray;
+				else
 					return Member.Kind.Value;
 
-				throw new Exception("Anon values can't be unused");
 			}
 
 			if (value.type == JSON_TYPE.ARRAY) {
