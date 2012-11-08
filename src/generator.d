@@ -3,6 +3,7 @@
 module generator;
 
 import packets : PacketGroup, Packet, Member, Constant;
+import std.conv : to;
 import std.stream : Stream;
 import std.string : format;
 import std.cstream : dout;
@@ -56,8 +57,13 @@ void writeStruct(Stream o, PacketGroup pg, Packet[] packets)
 	foreach(p; packets) {
 		o.writefln("struct %s", p.structName);
 		o.writefln("{");
+
+		o.writefln("%sconst ubyte %s = 0x%02s;", pg.indentStr, pg.idStr, to!string(p.id, 16));
+		o.writefln();
+
 		foreach(m; p.members)
 			printMember(m);
+
 		o.writefln("}");
 		o.writefln();
 	}
