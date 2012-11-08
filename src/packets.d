@@ -28,6 +28,8 @@ class Constant
 		float floating;
 		long integer;
 	}
+
+	string str; ///< string value straight from JSON.
 }
 
 
@@ -96,6 +98,8 @@ public:
 
 
 	const string idStr = "id"; ///< Name used 
+
+	const string indentStr = "\t";
 
 	const string packetNameStr = "packet"; ///< packet name in read/write functions.
 	const string lengthSuffixStr = "Length"; ///< Suffix for looking up array lengths.

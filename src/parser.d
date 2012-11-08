@@ -185,18 +185,22 @@ private:
 		switch(v.type) with (JSON_TYPE) {
 		case INTEGER:
 			ret.kind = Constant.Kind.Integer;
+			ret.str = to!string(v.integer);
 			ret.integer = v.integer;
 			break;
 		case FLOAT:
 			ret.kind = Constant.Kind.Float;
+			ret.str = to!string(v.floating);
 			ret.floating = v.floating;
 			break;
 		case TRUE:
 			ret.kind = Constant.Kind.Bool;
+			ret.str = "true";
 			ret.boolean = true;
 			break;
 		case FALSE:
 			ret.kind = Constant.Kind.Bool;
+			ret.str = "false";
 			ret.boolean = false;
 			break;
 		default:
