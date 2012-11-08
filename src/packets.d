@@ -102,6 +102,8 @@ public:
 
 	const string indentStr = "\t";
 
+	const string packetSufixStr = "Packet";
+
 	const string packetNameStr = "packet"; ///< packet name in read/write functions.
 	const string lengthSuffixStr = "Length"; ///< Suffix for looking up array lengths.
 
@@ -138,19 +140,13 @@ public:
 	{
 		void names(Packet packet) {
 			packet.listenerName = packet.lowerName;
+			packet.structName = packet.upperName ~ packetSufixStr;
 			packet.readFuncName = readFuncPrefixStr ~ packet.structName;
 			packet.writeFuncName = writeFuncPrefixStr ~ packet.structName;
 		}
 
-		foreach(packet; serverPackets) {
-			packet.structName = packet.upperName;
+		foreach(packet; allPackets)
 			names(packet);
-		}
-
-		foreach(packet; clientPackets) {
-			packet.structName = packet.upperName;
-			names(packet);
-		}
 
 		typeMap = null;
 		typeArrayMap = null;
