@@ -89,7 +89,6 @@ void writeReadFunction(Stream o, PacketGroup pg, Packet p)
 		p.listenerName,
 		pg.packetNameStr);
 
-
 	o.writefln("}");
 	o.writefln();
 }
@@ -164,35 +163,19 @@ void writeHeader(Stream o, PacketGroup pg)
 	o.writefln();
 	o.writefln("class %s", pg.socketTypeStr);
 	o.writefln("{");
-	o.writefln("\tabstract bool readBool();");
-	o.writefln("\tabstract byte readByte();");
-	o.writefln("\tabstract ubyte readUbyte();");
-	o.writefln("\tabstract short readShort();");
-	o.writefln("\tabstract ushort readUshort();");
-	o.writefln("\tabstract int readInt();");
-	o.writefln("\tabstract uint readUint();");
-	o.writefln("\tabstract long readLong();");
-	o.writefln("\tabstract ulong readUlong();");
-	o.writefln("\tabstract float readFloat();");
-	o.writefln("\tabstract double readDouble();");
-	o.writefln("\tabstract string readUSC();");
-	o.writefln("\tabstract Meta* readMeta();");
-	o.writefln("\tabstract Slot* readSlot();");
+	foreach(t; pg.readFuncs.keys) {
+		o.writefln("%sabstract %s %s();",
+			pg.indentStr,
+			pg.typeMap[t],
+			pg.readFuncs[t]);
+	}
 	o.writefln();
-	o.writefln("\tabstract bool[] readBoolArray(uint);");
-	o.writefln("\tabstract byte[] readByteArray(uint);");
-	o.writefln("\tabstract ubyte[] readUbyteArray(uint);");
-	o.writefln("\tabstract short[] readShortArray(uint);");
-	o.writefln("\tabstract ushort[] readUshortArray(uint);");
-	o.writefln("\tabstract int[] readIntArray(uint);");
-	o.writefln("\tabstract uint[] readUintArray(uint);");
-	o.writefln("\tabstract long[] readLongArray(uint);");
-	o.writefln("\tabstract ulong[] readUlongArray(uint);");
-	o.writefln("\tabstract float[] readFloatArray(uint);");
-	o.writefln("\tabstract double[] readDoubleArray(uint);");
-	o.writefln("\tabstract Meta* readMetaArray(uint);");
-	o.writefln("\tabstract Slot* readSlotArray(uint);");
-	o.writefln("\tabstract ChunkMeta[] readChunkMetaArray(uint);");
+	foreach(t; pg.readArrayFuncs.keys) {
+		o.writefln("%sabstract %s %s(uint);",
+			pg.indentStr,
+			pg.typeArrayMap[t],
+			pg.readArrayFuncs[t]);
+	}
 	o.writefln("}");
 	o.writefln();
 	o.writefln("struct Slot {}",);
@@ -203,100 +186,64 @@ void writeHeader(Stream o, PacketGroup pg)
 	o.writefln();
 }
 
-string getReadFunc(PacketGroup pg, string type)
-{
-	switch(type) {
-	// Primitive
-	case "bool": return "readBool";
-	case "byte": return "readByte";
-	case "ubyte": return "readUbyte";
-	case "int": return "readInt";
-	case "uint": return "readUint";
-	case "short": return "readShort";
-	case "ushort": return "readUshort";
-	case "long": return "readLong";
-	case "ulong": return "readUlong";
-	case "float": return "readFloat";
-	case "double": return "readDouble";
-	case "string": return "readUSC";
-	// Meta
-	case "slot": return "readSlot";
-	case "meta": return "readMeta";
-	default:
-		throw new Exception(format("Unhandled type (%s)", type));
-	}
-}
 
-string getReadArrayFunc(PacketGroup pg, string type)
-{
-	switch(type) {
-	// Primitive
-	case "bool": return "readBoolArray";
-	case "byte": return "readByteArray";
-	case "ubyte": return "readUbyteArray";
-	case "int": return "readIntArray";
-	case "uint": return "readUintArray";
-	case "short": return "readShortArray";
-	case "ushort": return "readUshortArray";
-	case "long": return "readLongArray";
-	case "ulong": return "readUlongArray";
-	case "float": return "readFloatArray";
-	case "double": return "readDoubleArray";
-	// Meta
-	case "slot": return "readSlotArray";
-	case "meta": return "readMetaArray";
-	case "ChunkMeta": return "readChunkMetaArray";
-	default:
-		throw new Exception(format("Unhandled type (%s)", type));
-	}
-}
+/*
+ *
+ * Silly accessor helpers.
+ *
+ */
+
 
 string getMemberType(PacketGroup pg, string type)
 {
-	switch(type) {
-	// Primitive
-	case "bool": return "bool";
-	case "byte": return "byte";
-	case "ubyte": return "ubyte";
-	case "int": return "int";
-	case "uint": return "uint";
-	case "short": return "short";
-	case "ushort": return "ushort";
-	case "long": return "long";
-	case "ulong": return "ulong";
-	case "float": return "float";
-	case "double": return "double";
-	case "string": return "string";
-	// Meta
-	case "slot": return "Slot*";
-	case "meta": return "Meta*";
-	case "ChunkMeta": return "ChunkMeta";
-	default:
+	try {
+		return pg.typeMap[type];
+	} catch (Exception e) {
 		throw new Exception(format("Unhandled type (%s)", type));
 	}
 }
 
 string getMemberArrayType(PacketGroup pg, string type)
 {
-	switch(type) {
-	// Primitive
-	case "bool": return "bool[]";
-	case "byte": return "byte[]";
-	case "ubyte": return "ubyte[]";
-	case "int": return "int[]";
-	case "uint": return "uint[]";
-	case "short": return "short[]";
-	case "ushort": return "ushort[]";
-	case "long": return "long[]";
-	case "ulong": return "ulong[]";
-	case "float": return "float[]";
-	case "double": return "double[]";
-	case "string": return "string[]";
-	// Meta
-	case "slot": return "Slot*";
-	case "meta": return "Meta*";
-	case "ChunkMeta": return "ChunkMeta[]";
-	default:
+	try {
+		return pg.typeArrayMap[type];
+	} catch (Exception e) {
+		throw new Exception(format("Unhandled type (%s)", type));
+	}
+}
+
+string getReadFunc(PacketGroup pg, string type)
+{
+	try {
+		return pg.readFuncs[type];
+	} catch (Exception e) {
+		throw new Exception(format("Unhandled type (%s)", type));
+	}
+}
+
+string getReadArrayFunc(PacketGroup pg, string type)
+{
+	try {
+		return pg.readArrayFuncs[type];
+	} catch (Exception e) {
+		throw new Exception(format("Unhandled type (%s)", type));
+	}
+}
+
+string getWriteFunc(PacketGroup pg, string type)
+{
+	try {
+		return pg.writeFuncs[type];
+	} catch (Exception e) {
+		throw new Exception(format("Unhandled type (%s)", type));
+	}
+}
+
+string getWriteArrayFunc(PacketGroup pg, string type)
+{
+	try {
+		return pg.writeArrayFuncs[type];
+	} catch (Exception e) {
 		throw new Exception(format("Unhandled type (%s)", type));
 	}
 }

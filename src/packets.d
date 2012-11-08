@@ -32,7 +32,6 @@ class Constant
 	string str; ///< string value straight from JSON.
 }
 
-
 /**
  * A member of a packet.
  */
@@ -118,6 +117,14 @@ public:
 	const string packetFromServerPrefixStr = "Server";
 
 
+	string[string] typeMap;
+	string[string] typeArrayMap;
+	string[string] readFuncs;
+	string[string] readArrayFuncs;
+	string[string] writeFuncs;
+	string[string] writeArrayFuncs;
+
+
 public:
 	this(Packet[] clientPackets, Packet[] serverPackets)
 	{
@@ -144,5 +151,50 @@ public:
 			packet.structName = packetFromClientPrefixStr ~ packet.upperName;
 			names(packet);
 		}
+
+		typeMap = null;
+		typeArrayMap = null;
+		readFuncs = null;
+		readArrayFuncs = null;
+		writeFuncs = null;
+		writeArrayFuncs = null;
+
+		void addType(string j, string type, string arrayType,
+		             string readFunc, string readArrayFunc,
+		             string writeFunc, string writeArrayFunc)
+		{
+			if (type !is null) typeMap[j] = type;
+			if (arrayType !is null) typeArrayMap[j] = arrayType;
+			if (readFunc !is null) readFuncs[j] = readFunc;
+			if (readArrayFunc !is null) readArrayFuncs[j] = readArrayFunc;
+			if (writeFunc !is null) writeFuncs[j] = writeFunc;
+			if (writeArrayFunc !is null) writeArrayFuncs[j] = writeArrayFunc;
+		}
+
+		auto pt = [
+			"bool", "byte", "ubyte", "int", "uint",
+			"short", "ushort", "long", "ulong",
+			"float", "double"];
+
+		foreach(t; pt) {
+			// D types maps directly to the types in the JSON file.
+			string caped = toUpper(t[0 .. 1]) ~ t[1 .. $];
+			addType(t, t, t ~ "[]",
+			        readFuncPrefixStr ~ caped, readFuncPrefixStr ~ caped ~ "Array",
+			        writeFuncPrefixStr ~ caped, writeFuncPrefixStr ~ caped ~ "Array");
+		}
+
+		addType("string", "string", null,
+		        readFuncPrefixStr ~ "USC", null,
+		        writeFuncPrefixStr ~ "USC", null);
+		addType("meta", "Meta*", "Meta*",
+		        readFuncPrefixStr ~ "Meta", readFuncPrefixStr ~ "Meta" ~ "Array",
+		        writeFuncPrefixStr ~ "Meta", writeFuncPrefixStr ~ "Meta" ~ "Array");
+		addType("slot", "Slot*", "Slot*",
+		        readFuncPrefixStr ~ "Slot", readFuncPrefixStr ~ "Slot" ~ "Array",
+		        writeFuncPrefixStr ~ "Slot", writeFuncPrefixStr ~ "Slot" ~ "Array");
+		addType("ChunkMeta", null, "ChunkMeta[]",
+		        null, readFuncPrefixStr ~ "ChunkMeta" ~ "Array",
+		        null, writeFuncPrefixStr ~ "ChunkMeta" ~ "Array");
 	}
 }
