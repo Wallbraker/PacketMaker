@@ -19,7 +19,11 @@ void output(PacketGroup pg)
 
 	foreach(p; pg.allPackets)
 		o.writeReadFunction(pg, p, "");
+
+	foreach(p; pg.allPackets)
+		o.writeWriteFunction(pg, p, "");
 }
+
 
 void writeStruct(Stream o, PacketGroup pg, Packet[] packets, string indent)
 {
@@ -81,9 +85,6 @@ void writeReadFunction(Stream o, PacketGroup pg, Packet p, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
 
-	bool server = p.from == Packet.From.Server;
-	string li = server ? pg.serverListenerTypeStr : pg.clientListenerTypeStr;
-
 	o.writefln("%svoid %s(%s %s, ref %s %s)",
 		indent,
 		p.readFuncName,
@@ -95,13 +96,13 @@ void writeReadFunction(Stream o, PacketGroup pg, Packet p, string indent)
 	o.writefln("%s{", indent);
 
 	foreach(m; p.members)
-		o.writeMember(pg, m, extraIndent);
+		o.writeReadMember(pg, m, extraIndent);
 
 	o.writefln("%s}", indent);
 	o.writefln();
 }
 
-void writeMember(Stream o, PacketGroup pg, Member m, string indent)
+void writeReadMember(Stream o, PacketGroup pg, Member m, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
 
@@ -150,9 +151,113 @@ void writeMember(Stream o, PacketGroup pg, Member m, string indent)
 			m.condValue.str);
 
 		foreach(child; m.members)
-			o.writeMember(pg, child, extraIndent);
+			o.writeReadMember(pg, child, extraIndent);
 
-		o.writefln("%s}", extraIndent);
+		o.writefln("%s}", indent);
+	}
+}
+
+void writeWriteFunction(Stream o, PacketGroup pg, Packet p, string indent)
+{
+	string extraIndent = indent ~ pg.indentStr;
+
+	o.writefln("%svoid %s(%s %s, ref %s %s)",
+		indent,
+		p.writeFuncName,
+		pg.socketTypeStr,
+		pg.socketNameStr,
+		p.structName,
+		pg.packetNameStr);
+
+	o.writefln("%s{", indent);
+
+	o.writefln("%s%s.%s(%s.%s);",
+		extraIndent,
+		pg.socketNameStr,
+		pg.getWriteFunc("ubyte"),
+		p.structName,
+		pg.idStr);
+
+	foreach(m; p.members)
+		o.writeWriteMember(pg, m, extraIndent);
+
+	o.writefln("%s}", indent);
+	o.writefln();
+}
+
+void writeWriteMember(Stream o, PacketGroup pg, Member m, string indent)
+{
+	string extraIndent = indent ~ pg.indentStr;
+
+	final switch(m.kind) with (Member.Kind) {
+	case Value:
+		o.writefln("%s%s.%s(%s.%s);",
+			indent,
+			pg.socketNameStr,
+			pg.getWriteFunc(m.type),
+			pg.packetNameStr,
+			m.name);
+		break;
+	case ValueAnon:
+		o.writefln("%s%s.%s(0);",
+			indent,
+			pg.socketNameStr,
+			pg.getWriteFunc(m.type));
+		break;
+	case ValueArray:
+		if (m.times !is null)
+			goto case StructArray;
+		if (pg.getMemberArrayType(m.type)[$-1] == '*')
+			throw new Exception(format(
+				"Can't write pointer arrays without length (%s)",
+				m.name));
+
+		o.writefln("%s%s.%s(cast(%s)(%s.%s.%s));",
+				indent,
+				pg.socketNameStr,
+				pg.getWriteFunc(m.lengthType),
+				pg.getMemberType(m.lengthType),
+				pg.packetNameStr,
+				m.name,
+				pg.lengthStr);
+
+		o.writefln("%s%s.%s(%s.%s);",
+			indent,
+			pg.socketNameStr,
+			pg.getWriteArrayFunc(m.type),
+			pg.packetNameStr,
+			m.name);
+		break;
+	case StructArray:
+		if (pg.getMemberArrayType(m.type)[$-1] == '*')
+			o.writefln("%s%s.%s(%s.%s, %s.%s);",
+				indent,
+				pg.socketNameStr,
+				pg.getWriteArrayFunc(m.type),
+				pg.packetNameStr,
+				m.name,
+				pg.packetNameStr,
+				m.times);
+		else
+			o.writefln("%s%s.%s(%s.%s);",
+				indent,
+				pg.socketNameStr,
+				pg.getWriteArrayFunc(m.type),
+				pg.packetNameStr,
+				m.name);
+		break;
+	case CondMembers:
+		o.writefln("%sif (%s.%s %s %s) {",
+			indent,
+			pg.packetNameStr,
+			m.condField,
+			m.condCmp,
+			m.condValue.str);
+
+		foreach(child; m.members)
+			o.writeReadMember(pg, child, extraIndent);
+
+		o.writefln("%s}", indent);
 	}
 }
 
@@ -187,6 +292,26 @@ void writeHeader(Stream o, PacketGroup pg)
 			pg.indentStr,
 			pg.typeArrayMap[t],
 			pg.readArrayFuncs[t]);
+	}
+	o.writefln();
+	foreach(t; pg.writeFuncs.keys) {
+		o.writefln("%sabstract void %s(%s);",
+			pg.indentStr,
+			pg.writeFuncs[t],
+			pg.typeMap[t]);
+	}
+	o.writefln();
+	foreach(t; pg.writeArrayFuncs.keys) {
+		if (pg.typeArrayMap[t][$-1] == '*')
+			o.writefln("%sabstract void %s(%s, uint);",
+				pg.indentStr,
+				pg.writeArrayFuncs[t],
+				pg.typeArrayMap[t]);
+		else
+			o.writefln("%sabstract void %s(%s);",
+				pg.indentStr,
+				pg.writeArrayFuncs[t],
+				pg.typeArrayMap[t]);
 	}
 	o.writefln("}");
 	o.writefln();

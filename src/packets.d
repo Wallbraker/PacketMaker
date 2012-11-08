@@ -104,6 +104,8 @@ public:
 
 	const string packetSufixStr = "Packet";
 
+	const string lengthStr = "length"; ///< For accessing array lengths.
+
 	const string packetNameStr = "packet"; ///< packet name in read/write functions.
 	const string lengthSuffixStr = "Length"; ///< Suffix for looking up array lengths.
 
