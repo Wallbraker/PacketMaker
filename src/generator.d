@@ -23,12 +23,68 @@ void output(PacketGroup pg)
 
 	foreach(p; pg.allPackets)
 		o.writeWriteFunction(pg, p, "");
+
+	o.writeProxyFunction(pg, pg.clientPackets, "", "client", "server");
+	o.writeProxyFunction(pg, pg.serverPackets, "", "server", "client");
 }
 
+void writeProxyFunction(Stream o, PacketGroup pg, Packet[] packets,
+                        string indent, string fromStr, string toStr)
+{
+	string extraIndent = indent ~ pg.indentStr;
+
+	o.writefln();
+	o.writefln("%svoid %sProxy(%s %s, %s %s, ubyte id)",
+		indent,
+		fromStr,
+		pg.socketTypeStr,
+		fromStr,
+		pg.socketTypeStr,
+		toStr);
+	o.writefln("%s{", indent);
+	o.writefln("%sswitch(id) {", extraIndent);
+
+	foreach(p; pg.clientPackets)
+		o.writeProxyCase(pg, p, extraIndent, fromStr, toStr);
+
+	o.writefln("%sdefault:", extraIndent);
+	o.writefln("%sthrow new Exception(\"invalid packet\");", extraIndent ~ pg.indentStr);
+	o.writefln("%s}", extraIndent);
+	o.writefln("%s}", indent);
+}
+
+void writeProxyCase(Stream o, PacketGroup pg, Packet p,
+                    string indent, string fromStr, string toStr)
+{
+	o.writefln("%scase 0x%02s:", indent, to!string(p.id, 16));
+
+	// All folowing statements on new indent.
+	indent = indent ~ pg.indentStr;
+	string extraIndent = indent ~ pg.indentStr;
+
+	o.writefln("%s%s %s;", indent, p.structName, pg.packetNameStr);
+
+	o.writefln();
+	o.writefln("%s%s(%s, %s);",
+		indent,
+		p.readFuncName,
+		fromStr,
+		pg.packetNameStr);
+	o.writefln("%s//writefln(\"%s -> %%s\", \"%s\");", indent, fromStr, p.structName);
+	o.writefln("%s%s(%s, %s);",
+		indent,
+		p.writeFuncName,
+		toStr,
+		pg.packetNameStr);
+
+	o.writefln("%sbreak;", indent);
+}
 
 void writeStruct(Stream o, PacketGroup pg, Packet p, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
+
+	o.writefln();
 
 	void printMember(Member m) {
 		final switch(m.kind) with(Member.Kind) {
@@ -62,28 +118,13 @@ void writeStruct(Stream o, PacketGroup pg, Packet p, string indent)
 		printMember(m);
 
 	o.writefln("%s}", indent);
-	o.writefln();
-}
-
-void writeDispatchCase(Stream o, PacketGroup pg, Packet p)
-{
-	// Not yet used.
-
-	o.writefln("%s%s %s;", pg.indentStr, p.structName, pg.packetNameStr);
-	o.writefln();
-
-	o.writefln();
-	o.writefln("%s%s.%s(%s);",
-		pg.indentStr,
-		pg.listenerNameStr,
-		p.listenerName,
-		pg.packetNameStr);
 }
 
 void writeReadFunction(Stream o, PacketGroup pg, Packet p, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
 
+	o.writefln();
 	o.writefln("%svoid %s(%s %s, ref %s %s)",
 		indent,
 		p.readFuncName,
@@ -98,7 +139,6 @@ void writeReadFunction(Stream o, PacketGroup pg, Packet p, string indent)
 		o.writeReadMember(pg, m, extraIndent);
 
 	o.writefln("%s}", indent);
-	o.writefln();
 }
 
 void writeReadMember(Stream o, PacketGroup pg, Member m, string indent)
@@ -160,6 +200,7 @@ void writeWriteFunction(Stream o, PacketGroup pg, Packet p, string indent)
 {
 	string extraIndent = indent ~ pg.indentStr;
 
+	o.writefln();
 	o.writefln("%svoid %s(%s %s, ref %s %s)",
 		indent,
 		p.writeFuncName,
@@ -181,7 +222,6 @@ void writeWriteFunction(Stream o, PacketGroup pg, Packet p, string indent)
 		o.writeWriteMember(pg, m, extraIndent);
 
 	o.writefln("%s}", indent);
-	o.writefln();
 }
 
 void writeWriteMember(Stream o, PacketGroup pg, Member m, string indent)
@@ -265,13 +305,13 @@ void writeInterface(Stream o, PacketGroup pg, string name, Packet[] packets, str
 {
 	string extraIndent = indent ~ pg.indentStr;
 
+	o.writefln();
 	o.writefln("%sinterface %s", name, indent);
 	o.writefln("%s{", indent);
 	foreach(p; packets) {
 		o.writefln("%svoid %s(ref %s);", extraIndent, p.listenerName, p.structName);
 	}
 	o.writefln("%s}", indent);
-	o.writefln();
 }
 
 void writeHeader(Stream o, PacketGroup pg)
@@ -320,7 +360,6 @@ void writeHeader(Stream o, PacketGroup pg)
 	o.writefln("struct Meta {}");
 	o.writefln();
 	o.writefln("struct ChunkMeta {}");
-	o.writefln();
 }
 
 
