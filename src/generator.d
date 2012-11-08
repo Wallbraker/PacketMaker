@@ -198,10 +198,11 @@ void writeWriteMember(Stream o, PacketGroup pg, Member m, string indent)
 			m.name);
 		break;
 	case ValueAnon:
-		o.writefln("%s%s.%s(0);",
+		o.writefln("%s%s.%s(%s);",
 			indent,
 			pg.socketNameStr,
-			pg.getWriteFunc(m.type));
+			pg.getWriteFunc(m.type),
+			m.def.str);
 		break;
 	case ValueArray:
 		if (m.times !is null)

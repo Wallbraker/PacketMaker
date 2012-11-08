@@ -180,6 +180,7 @@ private:
 			break;
 		case ValueAnon:
 			m.type = v.array[0].str;
+			m.def = parseConstant(v.array[2].object["default"]);
 			break;
 		case CondMembers:
 			if (v.array[0].type == JSON_TYPE.ARRAY) {
@@ -369,14 +370,19 @@ private:
 			return false;
 
 		auto boolean = v.object["used"];
-		if (boolean.type == JSON_TYPE.TRUE) {
-			value = true;
-			return true;
-		} else if (boolean.type == JSON_TYPE.FALSE) {
-			value = false;
-			return true;
+		if (boolean.type != JSON_TYPE.FALSE) {
+			if (boolean.type == JSON_TYPE.TRUE) {
+				value = true;
+				return true;
+			} else {
+				throw new Exception("Invalid used tag");
+			}
 		}
 
-		throw new Exception("Invalid used tag");
+		if (("default" in v.object) is null)
+			throw new Exception("Used \"false\" need default tag");
+
+		value = false;
+		return true;
 	}
 }

@@ -56,6 +56,8 @@ class Member
 
 	Member[] members; // must if kind == [CondMembers, ArrayStruct]
 
+	Constant def; // must if kind == ValueAnon
+
 	string condCmp;
 	string condField;
 	Constant condValue;
