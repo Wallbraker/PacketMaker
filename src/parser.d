@@ -17,6 +17,7 @@ import packets : Constant, Member, Packet;
 class PacketParser
 {
 public:
+	Packet[] allPackets;
 	Packet[] serverPackets;
 	Packet[] clientPackets;
 
@@ -39,6 +40,7 @@ public:
 			parsePacket(id, p);
 		}
 
+		sort!("a.id < b.id")(allPackets);
 		sort!("a.id < b.id")(serverPackets);
 		sort!("a.id < b.id")(clientPackets);
 	}
@@ -53,15 +55,31 @@ private:
 			throw new Exception("Expected string type in tag \"source\"");
 		string source = pSource.str;
 
-		// Need to parse packet twice because some are
-		// different depending on source.
-		if (source == "C" || source == "B")
-			parsePacket(id, p, "C");
-		if (source == "S" || source == "B")
-			parsePacket(id, p, "S");
+
+		switch(source) with (Packet.From) {
+		case "C":
+			parsePacket(id, p, Client);
+			break;
+		case "S":
+			parsePacket(id, p, Server);
+			break;
+		case "B":
+			// Need to parse packet twice because some are
+			// different depending on source.
+			auto st = p.object["structure"];
+			if (st.type == JSON_TYPE.OBJECT) {
+				parsePacket(id, p, Client);
+				parsePacket(id, p, Server);
+			} else {
+				parsePacket(id, p, Both);
+			}
+			break;
+		default:
+			throw new Exception("Invalid source attribute");
+		}
 	}
 
-	void parsePacket(ubyte id, ref JSONValue p, string source)
+	void parsePacket(ubyte id, ref JSONValue p, Packet.From from)
 	{
 		auto pName = p.object["name"];
 
@@ -81,23 +99,24 @@ private:
 		string upperName = toUpper(name[0 .. 1]) ~ name[1 .. $];
 
 		/*
-		 * From client or server.
-		 */
-		Packet.From from;
-		if (source == "C")
-			from = Packet.From.Client;
-		else if (source == "S")
-			from = Packet.From.Server;
-		else
-			throw new Exception("Invalid source attribute");
-
-		/*
 		 * Members
 		 */
 		auto st = p.object["structure"];
 		if (st.type == JSON_TYPE.OBJECT) {
-			string str = from == Packet.From.Server ? "S" : "C";
-			st = st.object[str];
+			switch(from) with (Packet.From) {
+			case Client:
+				st = st.object["C"];
+				lowerName = "client" ~ upperName;
+				upperName = "Client" ~ upperName;
+				break;
+			case Server:
+				st = st.object["S"];
+				lowerName = "server" ~ upperName;
+				upperName = "Server" ~ upperName;
+				break;
+			default:
+				throw new Exception("structure tag internal error");
+			}
 		}
 		if (st.type != JSON_TYPE.ARRAY)
 			throw new Exception("Invalid type of tag structure");
@@ -120,7 +139,21 @@ private:
 		if (from == Packet.From.Server) {
 			serverPackets ~= packet;
 		} else {
+		}
+		final switch(from) with (Packet.From) {
+		case Client:
+			allPackets ~= packet;
 			clientPackets ~= packet;
+			break;
+		case Server:
+			allPackets ~= packet;
+			serverPackets ~= packet;
+			break;
+		case Both:
+			allPackets ~= packet;
+			clientPackets ~= packet;
+			serverPackets ~= packet;
+			break;
 		}
 	}
 

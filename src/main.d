@@ -16,7 +16,7 @@ int main(string[] args)
 
 	pp.parse(src);
 
-	auto pg = new PacketGroup(pp.clientPackets, pp.serverPackets);
+	auto pg = new PacketGroup(pp.allPackets, pp.clientPackets, pp.serverPackets);
 	output(pg);
 
 	return 0;

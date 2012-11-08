@@ -15,19 +15,10 @@ void output(PacketGroup pg)
 
 	o.writeHeader(pg);
 
-	o.writeInterface(pg, pg.clientListenerTypeStr, pg.clientPackets);
-	o.writeInterface(pg, pg.serverListenerTypeStr, pg.serverPackets);
+	o.writeStruct(pg, pg.allPackets);
 
-	o.writeStruct(pg, pg.clientPackets);
-	o.writeStruct(pg, pg.serverPackets);
-
-	foreach(p; pg.clientPackets) {
+	foreach(p; pg.allPackets)
 		o.writeReadFunction(pg, p);
-	}
-
-	foreach(p; pg.serverPackets) {
-		o.writeReadFunction(pg, p);
-	}
 }
 
 void writeStruct(Stream o, PacketGroup pg, Packet[] packets)
@@ -69,24 +60,12 @@ void writeStruct(Stream o, PacketGroup pg, Packet[] packets)
 	}
 }
 
-void writeReadFunction(Stream o, PacketGroup pg, Packet p)
+void writeDispatchCase(Stream o, PacketGroup pg, Packet p)
 {
-	bool server = p.from == Packet.From.Server;
-	string li = server ? pg.serverListenerTypeStr : pg.clientListenerTypeStr;
-
-	o.writefln("void %s(%s %s, %s %s)",
-		p.readFuncName,
-		pg.socketTypeStr,
-		pg.socketNameStr,
-		li, pg.listenerNameStr);
-
-	o.writefln("{");
+	// Not yet used.
 
 	o.writefln("%s%s %s;", pg.indentStr, p.structName, pg.packetNameStr);
 	o.writefln();
-
-	foreach(m; p.members)
-		o.writeMember(pg, m, pg.indentStr);
 
 	o.writefln();
 	o.writefln("%s%s.%s(%s);",
@@ -94,6 +73,24 @@ void writeReadFunction(Stream o, PacketGroup pg, Packet p)
 		pg.listenerNameStr,
 		p.listenerName,
 		pg.packetNameStr);
+}
+
+void writeReadFunction(Stream o, PacketGroup pg, Packet p)
+{
+	bool server = p.from == Packet.From.Server;
+	string li = server ? pg.serverListenerTypeStr : pg.clientListenerTypeStr;
+
+	o.writefln("void %s(%s %s, ref %s %s)",
+		p.readFuncName,
+		pg.socketTypeStr,
+		pg.socketNameStr,
+		p.structName,
+		pg.packetNameStr);
+
+	o.writefln("{");
+
+	foreach(m; p.members)
+		o.writeMember(pg, m, pg.indentStr);
 
 	o.writefln("}");
 	o.writefln();

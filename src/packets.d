@@ -70,6 +70,7 @@ class Packet
 	{	
 		Server,
 		Client,
+		Both,
 	}
 
 	ubyte id;
@@ -92,6 +93,7 @@ class Packet
 class PacketGroup
 {
 public:
+	Packet[] allPackets;
 	Packet[] clientPackets;
 	Packet[] serverPackets;
 
@@ -113,9 +115,6 @@ public:
 	const string clientListenerTypeStr = "ClientListener";
 	const string serverListenerTypeStr = "ServerListener";
 
-	const string packetFromClientPrefixStr = "Client";
-	const string packetFromServerPrefixStr = "Server";
-
 
 	string[string] typeMap;
 	string[string] typeArrayMap;
@@ -126,8 +125,9 @@ public:
 
 
 public:
-	this(Packet[] clientPackets, Packet[] serverPackets)
+	this(Packet[] allPackets, Packet[] clientPackets, Packet[] serverPackets)
 	{
+		this.allPackets = allPackets;
 		this.clientPackets = clientPackets;
 		this.serverPackets = serverPackets;
 
@@ -143,12 +143,12 @@ public:
 		}
 
 		foreach(packet; serverPackets) {
-			packet.structName = packetFromServerPrefixStr ~ packet.upperName;
+			packet.structName = packet.upperName;
 			names(packet);
 		}
 
 		foreach(packet; clientPackets) {
-			packet.structName = packetFromClientPrefixStr ~ packet.upperName;
+			packet.structName = packet.upperName;
 			names(packet);
 		}
 
