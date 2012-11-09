@@ -25,12 +25,14 @@ public:
 public:
 	void parse(string text)
 	{
-		serverPackets = null;
+		allPackets = null;
 		clientPackets = null;
+		serverPackets = null;
 
 		auto root = parseJSON(text);
 
-		foreach(key; root.object.keys) {
+		auto s = root.object.keys.dup;
+		foreach(key; sort(s)) {
 			if (key == "meta")
 				continue;
 
@@ -39,10 +41,6 @@ public:
 
 			parsePacket(id, p);
 		}
-
-		sort!("a.id < b.id")(allPackets);
-		sort!("a.id < b.id")(serverPackets);
-		sort!("a.id < b.id")(clientPackets);
 	}
 
 
@@ -136,10 +134,6 @@ private:
 		packet.from = from;
 		packet.members = m;
 
-		if (from == Packet.From.Server) {
-			serverPackets ~= packet;
-		} else {
-		}
 		final switch(from) with (Packet.From) {
 		case Client:
 			allPackets ~= packet;

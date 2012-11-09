@@ -74,7 +74,7 @@ void writeProxyFunction(Stream o, PacketGroup pg, Packet[] packets,
 	o.wfln("%s{", indent);
 	o.wfln("%sswitch(id) {", extraIndent);
 
-	foreach(p; pg.clientPackets)
+	foreach(p; packets)
 		o.writeProxyCase(pg, p, extraIndent, fromStr, toStr);
 
 	o.wfln("%sdefault:", extraIndent);
