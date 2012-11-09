@@ -4,28 +4,56 @@ module generator;
 
 import packets : PacketGroup, Packet, Member, Constant;
 import std.conv : to;
-import std.stream : Stream;
+import std.stream : Stream, BufferedFile;
 import std.string : format;
 import std.cstream : dout;
+import std.file : mkdir, exists;
 
 
 void output(PacketGroup pg)
 {
-	Stream o = dout;
+	string outDir = "output";
+	string proxyFile = "output/proxy.d";
+	string proxyPkg = "proxy";
+	string packetsFile = "output/packets.d";
+	string packetsPkg = "packets";
+	string marshallingFile = "output/marshalling.d";
+	string marshallingPkg = "marshalling";
 
-	o.writeHeader(pg);
+
+	if (!exists(outDir))
+		mkdir(outDir);
+
+	BufferedFile bf = new BufferedFile();
+
+
+	// Packets file.
+	bf.create(packetsFile);
+	bf.writePacketsHeader(packetsPkg);
 
 	foreach(p; pg.allPackets)
-		o.writeStruct(pg, p, "");
+		bf.writeStruct(pg, p, "");
+	bf.close();
+
+
+	// Proxy file.
+	bf.create(marshallingFile);
+	bf.writeHeader(marshallingPkg, [packetsPkg]);
 
 	foreach(p; pg.allPackets)
-		o.writeReadFunction(pg, p, "");
+		bf.writeReadFunction(pg, p, "");
 
 	foreach(p; pg.allPackets)
-		o.writeWriteFunction(pg, p, "");
+		bf.writeWriteFunction(pg, p, "");
+	bf.close();
 
-	o.writeProxyFunction(pg, pg.clientPackets, "", "client", "server");
-	o.writeProxyFunction(pg, pg.serverPackets, "", "server", "client");
+
+	// Proxy file.
+	bf.create(proxyFile);
+	bf.writeHeader(proxyPkg, [packetsPkg, marshallingPkg]);
+	bf.writeProxyFunction(pg, pg.clientPackets, "", "client", "server");
+	bf.writeProxyFunction(pg, pg.serverPackets, "", "server", "client");
+	bf.close();
 }
 
 void writeProxyFunction(Stream o, PacketGroup pg, Packet[] packets,
@@ -314,9 +342,31 @@ void writeInterface(Stream o, PacketGroup pg, string name, Packet[] packets, str
 	o.writefln("%s}", indent);
 }
 
-void writeHeader(Stream o, PacketGroup pg)
+void writeHeader(Stream o, string name, string[] imports)
 {
-	o.writefln("module packets;");
+	o.writefln("module %s;", name);
+	o.writefln();
+	foreach(i; imports) {
+		o.writefln("import %s;", i);
+	}
+	o.writefln();
+}
+
+void writePacketsHeader(Stream o, string name)
+{
+	o.writeHeader(name, null);
+
+	o.writefln();
+	o.writefln();
+	o.writefln("struct Slot {}",);
+	o.writefln();
+	o.writefln("struct Meta {}");
+	o.writefln();
+	o.writefln("struct ChunkMeta {}");
+}
+
+void writeMinecraftSocket(Stream o, PacketGroup pg)
+{
 	o.writefln();
 	o.writefln("class %s", pg.socketTypeStr);
 	o.writefln("{");
@@ -354,12 +404,6 @@ void writeHeader(Stream o, PacketGroup pg)
 				pg.typeArrayMap[t]);
 	}
 	o.writefln("}");
-	o.writefln();
-	o.writefln("struct Slot {}",);
-	o.writefln();
-	o.writefln("struct Meta {}");
-	o.writefln();
-	o.writefln("struct ChunkMeta {}");
 }
 
 
