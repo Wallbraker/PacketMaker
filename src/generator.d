@@ -29,7 +29,7 @@ void output(PacketGroup pg)
 
 	// Packets file.
 	bf.create(packetsFile);
-	bf.writePacketsHeader(packetsPkg);
+	bf.writePacketsHeader(pg, packetsPkg);
 
 	foreach(p; pg.allPackets)
 		bf.writeStruct(pg, p, "");
@@ -351,13 +351,19 @@ void writeHeader(Stream o, string name, string[] imports)
 	o.wfln();
 }
 
-void writePacketsHeader(Stream o, string name)
+void writePacketsHeader(Stream o, PacketGroup pg, string name)
 {
 	o.writeHeader(name, null);
 
 	o.wfln();
 	o.wfln();
-	o.wfln("struct Slot {}",);
+	o.wfln("enum From {");
+	o.wfln("%sClient,", pg.indentStr);
+	o.wfln("%sServer,", pg.indentStr);
+	o.wfln("%sBoth", pg.indentStr);
+	o.wfln("}");
+	o.wfln();
+	o.wfln("struct Slot {}");
 	o.wfln();
 	o.wfln("struct Meta {}");
 	o.wfln();
