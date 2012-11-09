@@ -140,6 +140,7 @@ void writeStruct(Stream o, PacketGroup pg, Packet p, string indent)
 	o.writefln("%s{", indent);
 
 	o.writefln("%sconst ubyte %s = 0x%02s;", extraIndent, pg.idStr, to!string(p.id, 16));
+	o.writefln("%sconst From %s = From.%s;", extraIndent, pg.fromStr, to!string(p.from));
 	o.writefln();
 
 	foreach(m; p.members)

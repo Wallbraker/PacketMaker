@@ -100,7 +100,8 @@ public:
 	Packet[] serverPackets;
 
 
-	const string idStr = "id"; ///< Name used 
+	const string idStr = "id"; ///< Name used.
+	const string fromStr = "from"; ///< Name of from field.
 
 	const string indentStr = "\t";
 
@@ -161,8 +162,7 @@ public:
 
 		void addType(string j, string type, string arrayType,
 		             string readFunc, string readArrayFunc,
-		             string writeFunc, string writeArrayFunc)
-		{
+		             string writeFunc, string writeArrayFunc) {
 			if (type !is null) typeMap[j] = type;
 			if (arrayType !is null) typeArrayMap[j] = arrayType;
 			if (readFunc !is null) readFuncs[j] = readFunc;
