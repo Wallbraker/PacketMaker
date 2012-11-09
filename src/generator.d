@@ -39,6 +39,8 @@ void output(PacketGroup pg)
 	// Proxy file.
 	bf.create(marshallingFile);
 	bf.writeHeader(marshallingPkg, [packetsPkg]);
+	bf.wfln();
+	bf.writeMinecraftSocket(pg);
 
 	foreach(p; pg.allPackets)
 		bf.writeReadFunction(pg, p, "");
