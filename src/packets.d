@@ -185,8 +185,8 @@ public:
 		addType("byte", null, "byte[]", null, "ByteArray", null, "ByteArray");
 		addType("int", null, "int[]", null, "IntArray", null, "IntArray");
 		addType("string", "string", null, "USC", null, "USC", null);
-		addType("meta", "Meta*", null, "Meta", null, "Meta", null);
-		addType("slot", "Slot*", "Slot*", "Slot", "SlotArray", "Slot","SlotArray");
+		addType("meta", "void[]", null, "Meta", null, "Meta", null);
+		addType("slot", "void[]", "void[]", "Slot", "SlotArray", "Slot","SlotArray");
 		addType("ChunkMeta", null, "ChunkMeta[]", null, "ChunkMetaArray", null, "ChunkMetaArray");
 	}
 }
