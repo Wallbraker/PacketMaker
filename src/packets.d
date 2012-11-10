@@ -165,10 +165,10 @@ public:
 		             string writeFunc, string writeArrayFunc) {
 			if (type !is null) typeMap[j] = type;
 			if (arrayType !is null) typeArrayMap[j] = arrayType;
-			if (readFunc !is null) readFuncs[j] = readFunc;
-			if (readArrayFunc !is null) readArrayFuncs[j] = readArrayFunc;
-			if (writeFunc !is null) writeFuncs[j] = writeFunc;
-			if (writeArrayFunc !is null) writeArrayFuncs[j] = writeArrayFunc;
+			if (readFunc !is null) readFuncs[j] = readFuncPrefixStr ~ readFunc;
+			if (readArrayFunc !is null) readArrayFuncs[j] = readFuncPrefixStr ~ readArrayFunc;
+			if (writeFunc !is null) writeFuncs[j] = writeFuncPrefixStr ~ writeFunc;
+			if (writeArrayFunc !is null) writeArrayFuncs[j] = writeFuncPrefixStr ~ writeArrayFunc;
 		}
 
 		auto pt = [
@@ -179,22 +179,14 @@ public:
 		foreach(t; pt) {
 			// D types maps directly to the types in the JSON file.
 			string caped = toUpper(t[0 .. 1]) ~ t[1 .. $];
-			addType(t, t, t ~ "[]",
-			        readFuncPrefixStr ~ caped, readFuncPrefixStr ~ caped ~ "Array",
-			        writeFuncPrefixStr ~ caped, writeFuncPrefixStr ~ caped ~ "Array");
+			addType(t, t, null, caped, null, caped, null);
 		}
 
-		addType("string", "string", null,
-		        readFuncPrefixStr ~ "USC", null,
-		        writeFuncPrefixStr ~ "USC", null);
-		addType("meta", "Meta*", "Meta*",
-		        readFuncPrefixStr ~ "Meta", readFuncPrefixStr ~ "Meta" ~ "Array",
-		        writeFuncPrefixStr ~ "Meta", writeFuncPrefixStr ~ "Meta" ~ "Array");
-		addType("slot", "Slot*", "Slot*",
-		        readFuncPrefixStr ~ "Slot", readFuncPrefixStr ~ "Slot" ~ "Array",
-		        writeFuncPrefixStr ~ "Slot", writeFuncPrefixStr ~ "Slot" ~ "Array");
-		addType("ChunkMeta", null, "ChunkMeta[]",
-		        null, readFuncPrefixStr ~ "ChunkMeta" ~ "Array",
-		        null, writeFuncPrefixStr ~ "ChunkMeta" ~ "Array");
+		addType("byte", null, "byte[]", null, "ByteArray", null, "ByteArray");
+		addType("int", null, "int[]", null, "IntArray", null, "IntArray");
+		addType("string", "string", null, "USC", null, "USC", null);
+		addType("meta", "Meta*", null, "Meta", null, "Meta", null);
+		addType("slot", "Slot*", "Slot*", "Slot", "SlotArray", "Slot","SlotArray");
+		addType("ChunkMeta", null, "ChunkMeta[]", null, "ChunkMetaArray", null, "ChunkMetaArray");
 	}
 }

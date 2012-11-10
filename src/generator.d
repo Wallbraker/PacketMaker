@@ -52,7 +52,7 @@ void output(PacketGroup pg)
 
 	// Proxy file.
 	bf.create(proxyFile);
-	bf.writeHeader(proxyPkg, [packetsPkg, marshallingPkg]);
+	bf.writeHeader(proxyPkg, ["std.stdio : writefln", packetsPkg, marshallingPkg]);
 	bf.writeProxyFunction(pg, pg.clientPackets, "", "client", "server");
 	bf.writeProxyFunction(pg, pg.serverPackets, "", "server", "client");
 	bf.close();
@@ -100,7 +100,7 @@ void writeProxyCase(Stream o, PacketGroup pg, Packet p,
 		p.readFuncName,
 		fromStr,
 		pg.packetNameStr);
-	o.wfln("%s//wfln(\"%s -> %%s\", \"%s\");", indent, fromStr, p.structName);
+	o.wfln("%swritefln(\"%s -> %%s\", \"%s\");", indent, fromStr, p.structName);
 	o.wfln("%s%s(%s, %s);",
 		indent,
 		p.writeFuncName,
